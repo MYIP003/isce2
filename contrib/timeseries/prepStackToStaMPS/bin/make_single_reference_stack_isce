@@ -170,31 +170,31 @@ if ($datasource == "slc_stack")  then                                           
         mkdir $SM_DIR/reference/geom                                                                # make directory "geom" inside /StaMPS/INSAR_YYYYMMDD/reference
     endif
     cd $SM_DIR/reference/geom                                                                       # cd to /StaMPS/INSAR_YYYYMMDD/reference/geom
-    ln -s -f  $stack_geom_path/los.rdr${geom_suffix}* .                                             # create softlink to .../merged/geomaster/los.rdr.full*
-    ln -s -f  $stack_geom_path/lat.rdr${geom_suffix}* .                                             # create softlink to .../merged/geomaster/lat.rdr.full*
-    ln -s -f  $stack_geom_path/lon.rdr${geom_suffix}* .                                             # create softlink to .../merged/geomaster/lon.rdr.full*
-    ln -s -f  $stack_geom_path/hgt.rdr${geom_suffix}* .                                             # create softlink to .../merged/geomaster/hgt.rdr.full*
+    ln -s -f  $stack_geom_path/los.rdr${geom_suffix}* .                                             # create softlink to .../merged/geom_master/los.rdr.full*
+    ln -s -f  $stack_geom_path/lat.rdr${geom_suffix}* .                                             # create softlink to .../merged/geom_master/lat.rdr.full*
+    ln -s -f  $stack_geom_path/lon.rdr${geom_suffix}* .                                             # create softlink to .../merged/geom_master/lon.rdr.full*
+    ln -s -f  $stack_geom_path/hgt.rdr${geom_suffix}* .                                             # create softlink to .../merged/geom_master/hgt.rdr.full*
     # check if the xml files exist
     if (! -e los.rdr${geom_suffix}.xml) then
-        echo "xml file for the SLC does not exist, you need to have these"
+        echo "xml file for the SLC does not exist, you need to have these"                          # check if .../merged/geom_master/los.rdr.full.xml exist
         exit 1
     endif
-    if (! -e lon.rdr${geom_suffix}.xml) then
+    if (! -e lon.rdr${geom_suffix}.xml) then                                                        # check if .../merged/geom_master/lon.rdr.full.xml exist
         echo "xml file for the SLC does not exist, you need to have these"
         exit 1
     endif
     if (! -e lat.rdr${geom_suffix}.xml) then
-        echo "xml file for the SLC does not exist, you need to have these"
+        echo "xml file for the SLC does not exist, you need to have these"                          # check if .../merged/geom_master/lat.rdr.full.xml exist
         exit 1
     endif
     if (! -e hgt.rdr${geom_suffix}.xml) then
-        echo "xml file for the SLC does not exist, you need to have these"
+        echo "xml file for the SLC does not exist, you need to have these"                          # check if .../merged/geom_master/hgt.rdr.full.xml exist
         exit 1
     endif
-    cd $SM_DIR               
+    cd $SM_DIR                                                                                      # cd to /StaMPS/INSAR_YYYYMMDD/
 
     # extract the information in readable format for stamps
-    isce2stamps
+    isce2stamps                                                                                     # RUN isce2stamps
 
 else if ($datasource == "slc_stack_burst") then
     echo \# BURST IMPLEMENTATION HERE \#
@@ -202,37 +202,37 @@ else if ($datasource == "slc_stack_burst") then
 endif
 
 # generating a file with the baseline information
-cd $SM_DIR
-step_baseline_stack.py -i $slc_stack_baseline_path -m $reference_date
+cd $SM_DIR                                                                                                  # cd to /StaMPS/INSAR_YYYYMMDD/
+step_baseline_stack.py -i $slc_stack_baseline_path -m $reference_date                                       # RUN step_baselie_stack.py 
 # Setting the new SM processing directory
-cd $slc_stack_path
-if (-e $SM_DIR/slcs.list) then
-   rm $SM_DIR/slcs.list > /dev/null
+cd $slc_stack_path                                                                                          # cd to .../merged/SLC
+if (-e $SM_DIR/slcs.list) then                                                                              # IF .../merged/SLC/slcs.list exist
+   rm $SM_DIR/slcs.list > /dev/null                                                                         # WHAT DOES THIS ACTION DO?
 endif
-if (! -e $SM_DIR/slcs.list) then
-   \ls -d [0-9]*[0-9] | sed "/$reference_date/ d" | gawk 'BEGIN {FS="/"} {print $(NF)}' > $SM_DIR/slcs.list
-   echo "Processing all SLCs as secondarys except $reference_date"
+if (! -e $SM_DIR/slcs.list) then                                                                            # IF .../merged/SLC/slcs.list does not exist
+   \ls -d [0-9]*[0-9] | sed "/$reference_date/ d" | gawk 'BEGIN {FS="/"} {print $(NF)}' > $SM_DIR/slcs.list # make the slcs.list
+   echo "Processing all SLCs as secondarys except $reference_date"                                          # print "Processing all SLCs as secondarys except 20181220"
 endif
-cd $SM_DIR
+cd $SM_DIR                                                                                                  # cd to /StaMPS/INSAR_YYYYMMD
 
 # loop over the set of dates to make SM combinations
 echo Looping over the secondary acquisitions now: 
-foreach dir(`cat slcs.list`)
-   set secondary_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $NF}'`
+foreach dir(`cat slcs.list`)                                                                                # loop over the slcs.list
+   set secondary_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $NF}'`                                     # set secondary_date = YYYYMMDD
    if ($secondary_date == "") then
        set secondary_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $(NF-1)}'`
    endif             
-   echo $secondary_date
+   echo $secondary_date                                                                                     # print "YYYYMMDD"
 
    # check if the SLC directoy needs to be made
-   if (! -e $secondary_date) then
-       mkdir $secondary_date
+   if (! -e $secondary_date) then                                                                           # if the folder named "YYYYMMDD" does not exist
+       mkdir $secondary_date                                                                                # make the directroy names "YYYYMMDD" (let it be 20170523)
    endif
     
    # the secondary SLC
-   set secondary_slc = ${slc_stack_path}/$secondary_date/$secondary_date.slc$slc_suffix
-   set secondary_slc_local = $secondary_date/coreg_fine/$secondary_date.slc$slc_suffix
-   cd $secondary_date
+   set secondary_slc = ${slc_stack_path}/$secondary_date/$secondary_date.slc$slc_suffix                     # set secondary_slc = .../merged/SLC/YYYYMMDD/20170523.slc.full
+   set secondary_slc_local = $secondary_date/coreg_fine/$secondary_date.slc$slc_suffix                      # set secondary_slc_local = 20170523/coreg_fine/20170523.slc.full
+   cd $secondary_date                                                                                       # cd to 20170523
 
    # generate the coreg_fine symbolic link which is used when loading into stamps
    if (! -e coreg_fine) then
