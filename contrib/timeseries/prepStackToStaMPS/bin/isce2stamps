@@ -10,13 +10,13 @@
 # Organization: Jet Propulsion Laboratory, California Institute of Technology
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-set curdir = `pwd` 
+set curdir = `pwd`                                                                                                      # curdir = 
 echo $curdir
 
 # getting the datatype to be processed
-set datasource = `grep source_data input_file | awk '{print $2}'`
-set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`
-set overwrite_flag = `grep overwrite input_file | awk '{print $2}'`
+set datasource = `grep source_data input_file | awk '{print $2}'`                                                       # datasource = slc_stack
+set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`                                                     # geom_suffic = .full
+set overwrite_flag = `grep overwrite input_file | awk '{print $2}'`                                                     # overwrite_flag = y (we didnt indicate, defult = y)
 
 # adding the overwrite_flag, set by default to overwrite files
 if ( "$overwrite_flag" == "" ) then
@@ -30,22 +30,22 @@ if ( "$overwrite_flag" == "no") then
     set overwrite_flag = n
 endif
 
-if ("$datasource" != "slc_stack_burst") then
+if ("$datasource" != "slc_stack_burst") then                                                                    # if datasource != slc_stack_burst (we enter this because we are in slc_stack)
     ## default filenames when starting from scratch with isce stack generation:
     # this is when one start processing with isce from scratch
-    set los_file = $curdir/reference/geom/los.rdr$geom_suffix
-    set lon_file = $curdir/reference/geom/lon.rdr$geom_suffix
-    set lat_file = $curdir/reference/geom/lat.rdr$geom_suffix
-    set dem_file = $curdir/reference/geom/z.rdr$geom_suffix
+    set los_file = $curdir/reference/geom/los.rdr$geom_suffix                                                   # set los_file = 
+    set lon_file = $curdir/reference/geom/lon.rdr$geom_suffix                                                   # set
+    set lat_file = $curdir/reference/geom/lat.rdr$geom_suffix                                                   # set
+    set dem_file = $curdir/reference/geom/z.rdr$geom_suffix                                                     #
     # setting the output filenames
-    set heading_file_out = $curdir/heading.raw
-    set incangle_file_out = $curdir/inc_angle.raw
-    set lon_file_out = $curdir/lon.raw
-    set lat_file_out = $curdir/lat.raw
-    set dem_file_out = $curdir/dem.raw
+    set heading_file_out = $curdir/heading.raw                                                                  #
+    set incangle_file_out = $curdir/inc_angle.raw                                                               #
+    set lon_file_out = $curdir/lon.raw                                                                          #
+    set lat_file_out = $curdir/lat.raw                                                                          #
+    set dem_file_out = $curdir/dem.raw                                                                          #
     ## modification of the height filename for the SLC stack processing:
     if ("$datasource" == "slc_stack") then
-         set dem_file = $curdir/reference/geom/hgt.rdr$geom_suffix
+         set dem_file = $curdir/reference/geom/hgt.rdr$geom_suffix                                              #
     endif 
 
     # extracting the dem
