@@ -136,44 +136,44 @@ echo
 if (! -e $SM_DIR/reference) then                                                              
    mkdir $SM_DIR/reference                                                                    # make a directory named "reference" inside .../StaMPS/INSAR_YYYYMMDD                                                              
 endif
-cd $SM_DIR/reference                                                                          # make a directory inside .../StaMPS/INSAR_YYYYMMDD# Go inside the directory "reference" 
+cd $SM_DIR/reference                                                                          # Go inside the directory "reference" 
 
 # the SLC structure for the BURST is different
 if ($datasource == "slc_stack")  then                                                         # IF source_data == slc_stack
-    ln -s -f  $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix}* .             # create softlink with the .../merged/SLC/YYYYMMDD/20181220.slc.full
+    ln -s -f  $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix}* .             # create softlink with the .../merged/SLC/YYYYMMDD/20181220.slc.full* (all files have .full includeing .full, .full.aux.xml, .full.vrt, .full.xml)                         
     if ( -e $slc_stack_path/$reference_date/${reference_date}.slc.hdr) then                   # IF 20181220.slc.hdr also exist
         ln -s -f  $slc_stack_path/$reference_date/${reference_date}.slc.hdr .                 # create softlink also with 20181220.slc.hdr
     else if ( -e $slc_stack_path/$reference_date/${reference_date}.hdr) then                  # IF 20181220.hdf also exist
         ln -s -f  $slc_stack_path/$reference_date/${reference_date}.hdr .                     # create softlink also with 20181220.hdr
     endif
-
-    rm $reference_date.slc${slc_suffix}.vrt
-    gdal_translate -of VRT $reference_date.slc${slc_suffix} $reference_date.slc${slc_suffix}.vrt
-    rm $reference_date.slc${slc_suffix}.xml
-    gdal2isce_xml.py -i $reference_date.slc${slc_suffix}.vrt
-    ln -s -f $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix} reference.slc
-    set reference_slc = $slc_stack_path/$reference_date/$reference_date.slc$slc_suffix
-    set reference_slc_local = reference/$reference_date.slc$slc_suffix
+    
+    rm $reference_date.slc${slc_suffix}.vrt                                                         # remove the 20181220.slc.full.vrt
+    gdal_translate -of VRT $reference_date.slc${slc_suffix} $reference_date.slc${slc_suffix}.vrt    # gdaltranslate to VRT format from input file 20181220.slc.full to new 20181220.slc.full.vrt
+    rm $reference_date.slc${slc_suffix}.xml                                                         # remove the 2018.slc.full.xml
+    gdal2isce_xml.py -i $reference_date.slc${slc_suffix}.vrt                                        # gdal2isce.xml.py input file: 20181220.slc.full.vrt
+    ln -s -f $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix} reference.slc         # create softlink between .../merged/SLC/YYYYMMDD/20181220.slc.full and reference.slc
+    set reference_slc = $slc_stack_path/$reference_date/$reference_date.slc$slc_suffix              # set reference_slc = .../merged/SLC/YYYYMMDD/201812220.slc.full
+    set reference_slc_local = reference/$reference_date.slc$slc_suffix                              # set reference_slc_local = reference/20181220.slc.full
 
     # check if the xml file exist
-    if (! -e $reference_date.slc$slc_suffix.xml) then
+    if (! -e $reference_date.slc$slc_suffix.xml) then                                               # IF 20181220.slc.full.xml does not exist, 
         echo "xml file for the SLC does not exist, you need to have these"
         exit 1
     endif
 
-    cd $SM_DIR
+    cd $SM_DIR                                                                                      # cd .../StaMPS/INSAR_YYYYMMDD
     # getting the meta-data used in stamps
-    get_LengthWidth.py reference/$reference_date.slc$slc_suffix 
+    get_LengthWidth.py reference/$reference_date.slc$slc_suffix                                     # get_LengthWidth.py from reference/20181220.slc.full
 
-    # linking the reference geometry information
-    if (! -e $SM_DIR/reference/geom) then
-        mkdir $SM_DIR/reference/geom
+    # linking the reference geometry information                            
+    if (! -e $SM_DIR/reference/geom) then                                                           # IF .../StaMPS/INSAR_YYYYMMDD/geom does not exist                   
+        mkdir $SM_DIR/reference/geom                                                                # make directory "geom" inside /StaMPS/INSAR_YYYYMMDD/reference
     endif
-    cd $SM_DIR/reference/geom 
-    ln -s -f  $stack_geom_path/los.rdr${geom_suffix}* .
-    ln -s -f  $stack_geom_path/lat.rdr${geom_suffix}* .
-    ln -s -f  $stack_geom_path/lon.rdr${geom_suffix}* .
-    ln -s -f  $stack_geom_path/hgt.rdr${geom_suffix}* .
+    cd $SM_DIR/reference/geom                                                                       # cd to /StaMPS/INSAR_YYYYMMDD/reference/geom
+    ln -s -f  $stack_geom_path/los.rdr${geom_suffix}* .                                             # create softlink to .../merged/geomaster/los.rdr.full*
+    ln -s -f  $stack_geom_path/lat.rdr${geom_suffix}* .                                             # create softlink to .../merged/geomaster/lat.rdr.full*
+    ln -s -f  $stack_geom_path/lon.rdr${geom_suffix}* .                                             # create softlink to .../merged/geomaster/lon.rdr.full*
+    ln -s -f  $stack_geom_path/hgt.rdr${geom_suffix}* .                                             # create softlink to .../merged/geomaster/hgt.rdr.full*
     # check if the xml files exist
     if (! -e los.rdr${geom_suffix}.xml) then
         echo "xml file for the SLC does not exist, you need to have these"
