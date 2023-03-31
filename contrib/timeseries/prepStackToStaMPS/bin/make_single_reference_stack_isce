@@ -32,25 +32,25 @@ if (! -e input_file) then
 endif
 
 # getting the type of data, in case the data is already pre-processed as a stack
-set datasource = `grep source_data input_file | awk '{print $2}'`
+set datasource = `grep source_data input_file | awk '{print $2}'`                   #datasource=slc_stack
 # check if there is an slc stack path specified
-set slc_stack_path = `grep slc_stack_path input_file | awk '{print $2}'`
+set slc_stack_path = `grep slc_stack_path input_file | awk '{print $2}'`            #slc_stack_path=.../merged/SLC
 # check the reference date 
-set reference_date = `grep slc_stack_reference input_file | awk '{print $2}'`
+set reference_date = `grep slc_stack_reference input_file | awk '{print $2}'`       #reference_date=20170604
 # cehck the geom path is specified
-set stack_geom_path = `grep slc_stack_geom_path input_file | awk '{print $2}'`
+set stack_geom_path = `grep slc_stack_geom_path input_file | awk '{print $2}'`      #stack_geom_path=.../merged/geom_master
 # get the slc suffix if specified
-set slc_suffix = `grep slc_suffix  input_file | awk '{print $2}'`
+set slc_suffix = `grep slc_suffix  input_file | awk '{print $2}'`                   #slc_suffix=.full
 # get the geom suffix if specified
-set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`
+set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`                 #slc_suffix=.full
 # get the wavelength
-set lambda = `grep lambda  input_file | awk '{print $2}'`
+set lambda = `grep lambda  input_file | awk '{print $2}'`                           #lambda=0.05546576
 # get the looks
-set looks = `grep range_looks  input_file | awk '{print $2}'`
+set looks = `grep range_looks  input_file | awk '{print $2}'`                       #looks=1
 # get the aspect ratio
-set ar = `grep aspect_ratio  input_file | awk '{print $2}'`
+set ar = `grep aspect_ratio  input_file | awk '{print $2}'`                         #ar=1
 # get the baseline folder path
-set slc_stack_baseline_path = `grep slc_stack_baseline_path  input_file | awk '{print $2}'`
+set slc_stack_baseline_path = `grep slc_stack_baseline_path  input_file | awk '{print $2}'`   #slc_stack_baseline_path=../baselines
 # overwrite flag
 set overwrite = 1
 set overwrite_flag = `grep overwrite input_file | awk '{print $2}'`                                                                                                          
@@ -61,7 +61,7 @@ if ( $overwrite_flag == "n" | $overwrite_flag == "no" ) then
 endif
 
 # catch errors
-if (("$datasource" != "slc_stack") && ("$datasource" != "slc_stack_burst")) then
+if (("$datasource" != "slc_stack") && ("$datasource" != "slc_stack_burst")) then        #Make sure the input for slc_stack in input file is correct
     echo This script is only for pre-processed coregisted stack options
     echo source_data needs to be either: slc_stack or slc_stack_burst
     echo
@@ -92,59 +92,59 @@ endif
 set slc_stack_path = `echo ${slc_stack_path}`
 echo 
 echo -------------------------------                                                                                                             
-echo Stack path is: $slc_stack_path
+echo Stack path is: $slc_stack_path                                                 #print Stack path is: .../merged/SLC
 
 # check if there is a fixed suffix for the slc names
 if ("$slc_suffix" != "") then
-    echo SLC has a suffix as: $slc_suffix
+    echo SLC has a suffix as: $slc_suffix                                           #print SLC has a suffix as: .full
 endif
 
 # check if there is a suffix for the geometry files
 if ("$geom_suffix" != "") then
-   echo Geometry files have a suffix as: $geom_suffix
+   echo Geometry files have a suffix as: $geom_suffix                               # Geometry files have a suffix as: .full
 endif
 
 # check if the reference is likely given as YYYYMMDD format
 set n_char = `echo $reference_date | wc -c`      # this includes the new line char too, so date should be 9 not 8 char
 #( $reference_date !~ ^[0-9]+$ )  => expression does not seem to catch letter...
 if ((  "$n_char" != "9" ) || ( "$reference_date" !~ ^[0-9]+$ )) then
-   echo The slc_stack_reference does not look to be in YYYYMMDD format: $reference_date
+   echo The slc_stack_reference does not look to be in YYYYMMDD format: $reference_date      # The slc_stack_reference should be YYYYMMDD
    echo
    exit 1
 endif
 
 # check if the SM dir already exists
-set SMdir = INSAR_$reference_date
-if (! -e $SMdir) then
-    mkdir $SMdir
+set SMdir = INSAR_$reference_date                                                             # SMdir = INSAR_YYYYMMDD
+if (! -e $SMdir) then   
+    mkdir $SMdir                                                                              # make the INSAR_YYYYMMDD directory
 endif
 
 # will now rename the input file and copy a version into the INSAR_YYYYMMDD folder
-cp input_file $SMdir/.
-mv input_file input_file_$reference_date
+cp input_file $SMdir/.                                                                        # Copy the input_file to INSAR_YYYYMMDD directory
+mv input_file input_file_$reference_date                                                      # Change the name of input_file to input_file_YYYYMMDD
 
 # save the ar, looks, and lambda files for StaMPS
-echo $lambda > $SMdir/lambda.1.in
+echo $lambda > $SMdir/lambda.1.in                                                             # Save lambda to a text file named lambda.1.in
 
-set SM_DIR = $WORKDIR/$SMdir
+set SM_DIR = $WORKDIR/$SMdir                                                                  # SM_DIR = ...../StaMPS/INSAR_YYYYMMDD
 # the reference date
-echo SM: Reference Date = $reference_date 
+echo SM: Reference Date = $reference_date                                                     # print Referemce Date = YYYYMMDD
 echo -------------------------------
 echo
 
-# linking the reference SLC
-if (! -e $SM_DIR/reference) then
-   mkdir $SM_DIR/reference
+# linking the reference SLC                 
+if (! -e $SM_DIR/reference) then                                                              
+   mkdir $SM_DIR/reference                                                                    # make a directory named "reference" inside .../StaMPS/INSAR_YYYYMMDD                                                              
 endif
-cd $SM_DIR/reference
+cd $SM_DIR/reference                                                                          # make a directory inside .../StaMPS/INSAR_YYYYMMDD# Go inside the directory "reference" 
 
 # the SLC structure for the BURST is different
-if ($datasource == "slc_stack")  then
-    ln -s -f  $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix}* .
-    if ( -e $slc_stack_path/$reference_date/${reference_date}.slc.hdr) then
-        ln -s -f  $slc_stack_path/$reference_date/${reference_date}.slc.hdr .
-    else if ( -e $slc_stack_path/$reference_date/${reference_date}.hdr) then
-        ln -s -f  $slc_stack_path/$reference_date/${reference_date}.hdr .
+if ($datasource == "slc_stack")  then                                                         # IF source_data == slc_stack
+    ln -s -f  $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix}* .             # create softlink with the .../merged/SLC/YYYYMMDD/20181220.slc.full
+    if ( -e $slc_stack_path/$reference_date/${reference_date}.slc.hdr) then                   # IF 20181220.slc.hdr also exist
+        ln -s -f  $slc_stack_path/$reference_date/${reference_date}.slc.hdr .                 # create softlink also with 20181220.slc.hdr
+    else if ( -e $slc_stack_path/$reference_date/${reference_date}.hdr) then                  # IF 20181220.hdf also exist
+        ln -s -f  $slc_stack_path/$reference_date/${reference_date}.hdr .                     # create softlink also with 20181220.hdr
     endif
 
     rm $reference_date.slc${slc_suffix}.vrt
