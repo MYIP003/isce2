@@ -236,55 +236,55 @@ foreach dir(`cat slcs.list`)                                                    
 
    # generate the coreg_fine symbolic link which is used when loading into stamps
    if (! -e coreg_fine) then
-       mkdir coreg_fine/
+       mkdir coreg_fine/                                                                                    # make a directory named "coreg_fine" inside the 20170523 folder
    endif 
-   cd coreg_fine
-   ln -s -f ${secondary_slc}* .
-   if ( -e ${slc_stack_path}/$secondary_date/$secondary_date.slc.hdr ) then
-       ln -s -f ${slc_stack_path}/$secondary_date/$secondary_date.slc.hdr .
-   else if ( -e ${slc_stack_path}/$secondary_date/$secondary_date.hdr) then
-        ln -s -f ${slc_stack_path}/$secondary_date/$secondary_date.hdr .
+   cd coreg_fine                                                                                            # go into the directory "coreg_fine"
+   ln -s -f ${secondary_slc}* .                                                                             # create soft link to .../merged/SLC/20170523/20170523.slc*
+   if ( -e ${slc_stack_path}/$secondary_date/$secondary_date.slc.hdr ) then                                 # if the file named 20170523.slc.hdr exist which existed in Sentinel workflow)
+       ln -s -f ${slc_stack_path}/$secondary_date/$secondary_date.slc.hdr .                                 # create soft link to .../merged/SLC/20170523/20170523.slc.hdr
+   else if ( -e ${slc_stack_path}/$secondary_date/$secondary_date.hdr) then                                 # if the file named 20170523.hdf exist (Does not exist in Sentinel workflow)
+        ln -s -f ${slc_stack_path}/$secondary_date/$secondary_date.hdr .                                    # create soft link to .../merged/SLC/20170523/20170523.hdf
    endif
-   rm $secondary_date.slc${slc_suffix}.vrt
-   gdal_translate -of VRT $secondary_date.slc$slc_suffix $secondary_date.slc${slc_suffix}.vrt
-   rm $secondary_date.slc${slc_suffix}.xml
-   gdal2isce_xml.py -i $secondary_date.slc${slc_suffix}.vrt
-   ln -s -f $secondary_slc coreg.slc                                                                                            
+   rm $secondary_date.slc${slc_suffix}.vrt                                                                  # remove the file 20170523.slc.full.vrt
+   gdal_translate -of VRT $secondary_date.slc$slc_suffix $secondary_date.slc${slc_suffix}.vrt               # gdal_translate to VRT format from 20170523.slc.full to new 20170523.slc.full.vrt
+   rm $secondary_date.slc${slc_suffix}.xml                                                                  # remove the file 20170523.slc.full.xml
+   gdal2isce_xml.py -i $secondary_date.slc${slc_suffix}.vrt                                                 # gdal2isce_xml-py from 20170523.slc.full.vrt (output file : 20170523.slc.full.xml)
+   ln -s -f $secondary_slc coreg.slc                                                                        # create soft link from   .../merged/SLC/YYYYMMDD/20170523.slc.full to coreg.slc                                                                                       
 
    # check if the xml file exist, if not need to make it
-   if (! -e $secondary_date.slc$slc_suffix.xml) then
-        echo "xml file for the SLC does not exist, you need to have these"
-        echo try: gdal2isce_xml.py -i $secondary_date.slc$slc_suffix
+   if (! -e $secondary_date.slc$slc_suffix.xml) then                                                        # IF 20170523.slc.full.xml does not exist
+        echo "xml file for the SLC does not exist, you need to have these"                                  #
+        echo try: gdal2isce_xml.py -i $secondary_date.slc$slc_suffix                                        #
         exit 1
    endif
         
-   cd $SM_DIR
+   cd $SM_DIR                                                                                               # cd to .../StaMPS/INSAR_YYYMMDD
    # generate the intererograms if requested
-   set IFG_DIR = $secondary_date
-   if ( "$generate_ifgs" == "y" ) then
-        set save_ifg = $IFG_DIR/isce_minrefdem.int
+   set IFG_DIR = $secondary_date                                                                            # IFG_DIR = 20170523
+   if ( "$generate_ifgs" == "y" ) then                                                                      # Check the flag generate_ifgs, should be "y"
+        set save_ifg = $IFG_DIR/isce_minrefdem.int                                                          # set save_ifg = 20170523/isce_minrefdem.int
         # store the information on how isce will be called
-        if ( -f $save_ifg & $overwrite == 0 ) then
-            # nothing to be done, file exist and user does not want to overwrite it
+        if ( -f $save_ifg & $overwrite == 0 ) then                                                          # IF the file 20170523/isce_minrefdem.int exist and overwrite = 0
+            # nothing to be done, file exist and user does not want to overwrite it                         # exit the if and not to overwrite the existing file
             echo $save_ifg exist, will not overwrite on user request
         else
-            echo "imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP" >> processing_SM.log
-            echo "imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP"
-            imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP
-            fixImageXml.py -f -i $save_ifg
+            echo "imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP" >> processing_SM.log   
+            echo "imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP"                        
+            imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP                                   # use imageMath --a reference/20181220.slc.full --b 20170523/coreg_fine/20170523.slc.full -o 20170523/isce_minrefdem.int
+            fixImageXml.py -f -i $save_ifg                                                                                                                # fixImageXml.py -f -i 20170523/isce_minrefdem.int
         endif
    endif
 
    # making the amplitude file
-   if ( "$amplitude_flag" == "y") then
-       set save_ampl = $IFG_DIR/isce_minrefdem.amp
+   if ( "$amplitude_flag" == "y") then                                                                                                                    # check amplitude_flag, shoud be == "n" 
+       set save_ampl = $IFG_DIR/isce_minrefdem.amp                                                                                                        # INSAR_YYYYMMDD/20170523/minrefdem.amp
        # making the amplitude for the ifgs, for ISCE the amp is a BIP file typically
        if ( -f $save_ampl & $overwrite == 0 ) then
             echo $save_ampl exist, will not overwrite on user request
        else
            echo "imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP" >> processing_SM.log
            echo "imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP"
-           imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP
+           imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP                                
            fixImageXml.py -f -i $save_ampl
        endif
    endif
@@ -292,14 +292,14 @@ foreach dir(`cat slcs.list`)                                                    
 
    # include a symbolic link for the secondary and reference slc.
    # This will be used latter on to get the amplitude information from in StaMPS
-   cd $IFG_DIR
-   ln -s -f $secondary_slc secondary.slc
-   ln -s -f $reference_slc reference.slc
+   cd $IFG_DIR                                                                                                           # cd 20170523
+   ln -s -f $secondary_slc secondary.slc                                                                                 # create soft link from secpndary_slc (=.../merged/SLC/YYYYMMDD/20170523.slc.full) to secondary.slc
+   ln -s -f $reference_slc reference.slc                                                                                 # create soft link from reference_slc (= .../merged/SLC/YYYYMMDD/201812220.slc.full) to reference.slc
 
-   cd $SM_DIR
+   cd $SM_DIR                                                                                                            # cd to .../StaMPS/INSAR_YYYMMDD
 
    echo 
    echo 
 end
-cd $WORKDIR
+cd $WORKDIR                                                                                                              # cd .../StaMPS (Go back to the highest level)
 
