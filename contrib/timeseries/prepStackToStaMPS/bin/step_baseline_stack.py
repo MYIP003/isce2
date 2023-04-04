@@ -40,11 +40,11 @@ import scipy
 import os
 
 # command line parsing of input file
-def cmdLineParse():
+def cmdLineParse():                                                                                                                         #  step_baseline_stack.py -i $slc_stack_baseline_path -m $reference_date                                       
     '''
     Command line parser.
     '''
-    parser = argparse.ArgumentParser(description='baseline re-estimation for a reference date')
+    parser = argparse.ArgumentParser(description='baseline re-estimation for a reference date')                                                              
     parser.add_argument('-i','--input', dest='baseline_dir', type=str,required=True, help='Path to the baseline directory')
     parser.add_argument('-m', '--reference_date' ,dest='new_reference', type=str, required=True , help='New reference date for stack')
     return parser.parse_args() 
@@ -59,26 +59,26 @@ def baselinegrid(inps):
     from osgeo import gdal
 
     # parsing the command line inputs
-    baseline_dir = inps.baseline_dir
-    new_reference = int(inps.new_reference)
+    baseline_dir = inps.baseline_dir                                                                             # baseline_dir = .../baselines
+    new_reference = int(inps.new_reference)                                                                      # new_reference =  YYYYMMDD
 
-    # check if the baseline grids are all in the same folder or if they are date YYYYMMDD_YYYYMMDD folders.
-    baseline_files = glob(os.path.join(baseline_dir,"2*","2*[0-9].vrt"))
+    # check if the baseline grids are all in the same folder or if they are date YYYYMMDD_YYYYMMDD folders.      # Check if the baseline grids are all in the same folder or if they are date YYYYMMDD_YYYYMMDD folders
+    baseline_files = glob(os.path.join(baseline_dir,"2*","2*[0-9].vrt"))                                         # Check if they are in date YYYYMMDD_YYYYMMDD folders
     if not baseline_files:
         # try to see if they are all local
-        baseline_files = glob(os.path.join(baseline_dir,"2*[0-9].vrt"))
+        baseline_files = glob(os.path.join(baseline_dir,"2*[0-9].vrt"))                                          # Check if they are in the same folder
     if not baseline_files:
         # need to raize error as no baseline files where found
         raise ValueError('No Baseline files were found')
                           
     # finding the reference baseline grid file
     reference_file = False
-    for baseline_file in baseline_files:
+    for baseline_file in baseline_files:                                                                         # baseline_files are .vrt files      
         date = os.path.basename(baseline_file)
         date = date.split('.vrt')
         date = int(date[0])
         if date == new_reference:
-            reference_file = os.path.join(os.path.dirname(baseline_file),str(date))
+            reference_file = os.path.join(os.path.dirname(baseline_file),str(date))                              # reference_file = 
     if not reference_file:
         raise Exception('Could not find the reference baseline grid')
 
