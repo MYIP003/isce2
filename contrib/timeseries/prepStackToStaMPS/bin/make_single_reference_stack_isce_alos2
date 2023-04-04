@@ -96,50 +96,50 @@ echo Stack path is: $slc_stack_path                                             
 
 # check if there is a fixed suffix for the slc names
 if ("$slc_suffix" != "") then
-    echo SLC has a suffix as: $slc_suffix                                           #print SLC has a suffix as: .full
+    echo SLC has a suffix as: $slc_suffix                                           #print SLC has a suffix as: .full / .slc
 endif
 
 # check if there is a suffix for the geometry files
 if ("$geom_suffix" != "") then
-   echo Geometry files have a suffix as: $geom_suffix                               # Geometry files have a suffix as: .full
+   echo Geometry files have a suffix as: $geom_suffix                               # Geometry files have a suffix as: .full / .slc
 endif
 
 # check if the reference is likely given as YYYYMMDD format
 set n_char = `echo $reference_date | wc -c`      # this includes the new line char too, so date should be 9 not 8 char
 #( $reference_date !~ ^[0-9]+$ )  => expression does not seem to catch letter...
-if ((  "$n_char" != "9" ) || ( "$reference_date" !~ ^[0-9]+$ )) then
-   echo The slc_stack_reference does not look to be in YYYYMMDD format: $reference_date      # The slc_stack_reference should be YYYYMMDD
+if ((  "$n_char" != "7" ) || ( "$reference_date" !~ ^[0-9]+$ )) then
+   echo The slc_stack_reference does not look to be in YYMMDD format: $reference_date      # The slc_stack_reference should be YYYYMMDD / YYMMDD
    echo
    exit 1
 endif
 
 # check if the SM dir already exists
-set SMdir = INSAR_$reference_date                                                             # SMdir = INSAR_YYYYMMDD
+set SMdir = INSAR_$reference_date                                                             # SMdir = INSAR_YYYYMMDD / INSAR_YYMMDD
 if (! -e $SMdir) then   
-    mkdir $SMdir                                                                              # make the INSAR_YYYYMMDD directory
+    mkdir $SMdir                                                                              # make the INSAR_YYYYMMDD directory / make the INSAR_YYMMDD directory
 endif
 
 # will now rename the input file and copy a version into the INSAR_YYYYMMDD folder
-cp input_file $SMdir/.                                                                        # Copy the input_file to INSAR_YYYYMMDD directory
-mv input_file input_file_$reference_date                                                      # Change the name of input_file to input_file_YYYYMMDD
+cp input_file $SMdir/.                                                                        # Copy the input_file to INSAR_YYYYMMDD directory / to INSAR_YYMMDD directory
+mv input_file input_file_$reference_date                                                      # Change the name of input_file to input_file_YYYYMMDD / input_file_YYMMDD
 
 # save the ar, looks, and lambda files for StaMPS
 echo $lambda > $SMdir/lambda.1.in                                                             # Save lambda to a text file named lambda.1.in
 
-set SM_DIR = $WORKDIR/$SMdir                                                                  # SM_DIR = ...../StaMPS/INSAR_YYYYMMDD
+set SM_DIR = $WORKDIR/$SMdir                                                                  # SM_DIR = ...../StaMPS/INSAR_YYYYMMDD /OR/ ...../StaMPS/INSAR_YYMMDD
 # the reference date
-echo SM: Reference Date = $reference_date                                                     # print Referemce Date = YYYYMMDD
+echo SM: Reference Date = $reference_date                                                     # print Reference Date = YYYYMMDD / YYMMDD
 echo -------------------------------
 echo
 
 # linking the reference SLC                 
 if (! -e $SM_DIR/reference) then                                                              
-   mkdir $SM_DIR/reference                                                                    # make a directory named "reference" inside .../StaMPS/INSAR_YYYYMMDD                                                              
+   mkdir $SM_DIR/reference                                                                    # make a directory named "reference" inside .../StaMPS/INSAR_YYYYMMDD /OR/ .../StaMPS/INSAR_YYMMDD                                                             
 endif
 cd $SM_DIR/reference                                                                          # Go inside the directory "reference" 
 
 # the SLC structure for the BURST is different
-if ($datasource == "slc_stack")  then                                                         # IF source_data == slc_stack
+if ($datasource == "slc_stack")  then                                                         # IF source_data == slc_stack (we go into this loop`)
     ln -s -f  $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix}* .             # create softlink with the .../merged/SLC/YYYYMMDD/20181220.slc.full* (all files have .full includeing .full, .full.aux.xml, .full.vrt, .full.xml)                         
     if ( -e $slc_stack_path/$reference_date/${reference_date}.slc.hdr) then                   # IF 20181220.slc.hdr also exist
         ln -s -f  $slc_stack_path/$reference_date/${reference_date}.slc.hdr .                 # create softlink also with 20181220.slc.hdr
