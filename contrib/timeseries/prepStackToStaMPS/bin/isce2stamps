@@ -73,43 +73,43 @@ if ("$datasource" != "slc_stack_burst") then                                    
     echo  
 
     # extracting the inc  angles rewrite into stamps format                                                      # Extracting the inc angles
-    if ( -f $incangle_file_out & "$overwrite_flag" == "n" ) then                                                 # IF the 
+    if ( -f $incangle_file_out & "$overwrite_flag" == "n" ) then                                                 # IF /StaMPS/INSAR_YYYYMMDD/inc_angle.raw exist
         echo inc angle file exist and will not be overwritten
     else
-        echo extracting the inc angle file
-        echo "imageMath.py -e="a_0" --a=$los_file -o $incangle_file_out -s BIL"
-        imageMath.py -e="a_0" --a=$los_file -o $incangle_file_out -s BIL
+        echo extracting the inc angle file                                                                       # IF does not exist
+        echo "imageMath.py -e="a_0" --a=$los_file -o $incangle_file_out -s BIL"                                  # save output file /StaMPS/INSAR_YYYYMMDD/inc_angle.raw
+        imageMath.py -e="a_0" --a=$los_file -o $incangle_file_out -s BIL                                         # imageMath.py --a /StaMPS/INSAR_YYYYMMDD/reference/geom/los.rdr.full -o /StaMPS/INSAR_YYYYMMDD/inc_angle.raw  
         echo
     endif
     echo 
 
     # getting the LOS conversion 
-    isce_los2stamps_ENU
+    isce_los2stamps_ENU                                                                                          # isce_los2stamps_ENU                                                                                 
 
     # rewriting files into stamps format
-    if ( -f $lon_file_out & "$overwrite_flag" == "n" ) then
-        echo lon file exist and will not be overwritte
-    else
+    if ( -f $lon_file_out & "$overwrite_flag" == "n" ) then                                                      # IF /StaMPS/INSAR_YYYYMMDD/lon.raw exist
+        echo lon file exist and will not be overwritte          
+    else                                                                                                         # IF does not exist
         echo extracting isce lon file
-        echo "imageMath.py -e="a_0" --a=$lon_file -o $lon_file_out -s BIL"
-        imageMath.py -e="a_0" --a=$lon_file -o $lon_file_out -s BIL
+        echo "imageMath.py -e="a_0" --a=$lon_file -o $lon_file_out -s BIL"                                       # save output file
+        imageMath.py -e="a_0" --a=$lon_file -o $lon_file_out -s BIL                                              # imageMath.py --a=/StaMPS/INSAR_YYYYMMDD/reference/geom/lon.rdr.full -o /StaMPS/INSAR_YYYYMMDD/lon.raw 
         echo
     endif
     echo
 
     # echo rewriting isce lat into stamps format
-    if ( -f $lat_file_out & "$overwrite_flag" == "n" ) then
+    if ( -f $lat_file_out & "$overwrite_flag" == "n" ) then                                                      # IF /StaMPS/INSAR_YYYYMMDD/lat.raw does not exist
         echo lat file exist and will not be overwritten
-    else
+    else                                                                                                         # IF does not exist
         echo extracting isce lat file
         echo "imageMath.py -e="a_0" --a=$lat_file -o $lat_file_out -s BIL"
-        imageMath.py -e="a_0" --a=$lat_file -o $lat_file_out -s BIL
+        imageMath.py -e="a_0" --a=$lat_file -o $lat_file_out -s BIL                                              # imageMath.py --a=/StaMPS/INSAR_YYYYMMDD/reference/geom/lat.rdr.full -o /StaMPS/INSAR_YYYYMMDD/lat.raw 
         echo
     endif
     echo
 
 else
-    # this would be the SLC stack burst option
+    # this would be the SLC stack burst option                                                                   # IF datasource = slc_stack_burst (we dont enter this because we are in slc_stack)
     echo \# BURST IMPLEMENTATION HERE \#
     exit 1
     # for the burst one would need to keep track of the burst numbers, 
