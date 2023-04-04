@@ -1,0 +1,305 @@
+#!/bin/tcsh -f
+#
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# copyright: 2017 to the present, california institute of technology.
+# all rights reserved. united states government sponsorship acknowledged.
+#
+# THESE SCRIPTS ARE PROVIDED TO YOU "AS IS" WITH NO WARRANTIES OF CORRECTNESS. USE AT YOUR OWN RISK.
+#
+# Author: David Bekaert
+# Organization: Jet Propulsion Laboratory, California Institute of Technology
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# generate the amplitude products
+set amplitude_flag=n
+set generate_ifgs=y
+
+set PRG = `basename "$0"`
+set AUT = "David Bekaert, April 2017"
+echo "$PRG $AUT"
+echo " "
+
+# working directory
+set WORKDIR=$cwd
+
+# check if the input file is specified
+if (! -e input_file) then 
+    echo You need to to have an input_file from which this program reads the parameters. 
+    echo Note this program is only for pre-processed coregistered stacks.
+    echo Therefore source_data needs to be either: slc_stack or slc_stack_burst 
+    echo
+    exit 1
+endif
+
+# getting the type of data, in case the data is already pre-processed as a stack
+set datasource = `grep source_data input_file | awk '{print $2}'`                   #datasource=slc_stack
+# check if there is an slc stack path specified
+set slc_stack_path = `grep slc_stack_path input_file | awk '{print $2}'`            #slc_stack_path=.../merged/SLC
+# check the reference date 
+set reference_date = `grep slc_stack_reference input_file | awk '{print $2}'`       #reference_date=20170604
+# cehck the geom path is specified
+set stack_geom_path = `grep slc_stack_geom_path input_file | awk '{print $2}'`      #stack_geom_path=.../merged/geom_master
+# get the slc suffix if specified
+set slc_suffix = `grep slc_suffix  input_file | awk '{print $2}'`                   #slc_suffix=.full
+# get the geom suffix if specified
+set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`                 #slc_suffix=.full
+# get the wavelength
+set lambda = `grep lambda  input_file | awk '{print $2}'`                           #lambda=0.05546576
+# get the looks
+set looks = `grep range_looks  input_file | awk '{print $2}'`                       #looks=1
+# get the aspect ratio
+set ar = `grep aspect_ratio  input_file | awk '{print $2}'`                         #ar=1
+# get the baseline folder path
+set slc_stack_baseline_path = `grep slc_stack_baseline_path  input_file | awk '{print $2}'`   #slc_stack_baseline_path=../baselines
+# overwrite flag
+set overwrite = 1
+set overwrite_flag = `grep overwrite input_file | awk '{print $2}'`                                                                                                          
+if ( $overwrite_flag == "n" | $overwrite_flag == "no" ) then
+    # do not overwrite existing the files
+    set overwrite = 0
+    echo Will not overwrite existing files
+endif
+
+# catch errors
+if (("$datasource" != "slc_stack") && ("$datasource" != "slc_stack_burst")) then        #Make sure the input for slc_stack in input file is correct
+    echo This script is only for pre-processed coregisted stack options
+    echo source_data needs to be either: slc_stack or slc_stack_burst
+    echo
+    exit 1
+endif
+# catch error specific for the type of stack processing
+# the stack processing option
+if (( "$slc_stack_path" == "" ) || ( "$reference_date" == "" ) || ( "$lambda" == "" ) || ( "$looks" == "" ) || ( "$ar" == "" ) || ( "$stack_geom_path" == "" ) || ( "$slc_stack_baseline_path" == "" ))  then
+        echo Need to define: 
+        echo \- slc_stack_path as the path to the slc\'s
+        echo \- slc_stack_reference as the reference of the \"NEW\" SM network as YYYYMMDD. This does not need to be the reference used to generate the stack
+        echo \- slc_stack_geom_path as the path to the geometry for the stack 
+        echo \- slc_stack_baseline_path as the path to the baseline folder for the stack, with files containing single baseline value as AAAAAAAA_YYYYMMDD.txt or grid of baselines as YYYYMMDD (isce readable file with xml information), and with the baseline in m units. 
+        echo \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AAAAAAAA is the data of the reference used to generate the intital stack
+        echo \- lambda as the SAR wavelength in m units
+        echo \- looks as the number of looks. Used only for multi-looked products \(e.g. quickviews\)
+        echo \- aspect_ratio as the integer ratio n_lines/n_pixels for a square pixel. Used only for multi-looked products \(e.g. quickviews\)
+        echo \*\*\*Optionally define:
+        echo \- slc_suffix as an extra string to be placed behind the SLC files
+        echo \- geom_suffix as an extra string to be placed behind the geom files
+        echo \- azimuth_looks which can be used to overwrite the aspect_ratio field. Used only for multi-looked products \(e.g. quickview\)        
+        echo \- overwrite a flag either y or no to overwrite exisiting files on re-run
+        echo
+        exit 1
+endif
+
+# make sure the slash is added in case the variable is not empty
+set slc_stack_path = `echo ${slc_stack_path}`
+echo 
+echo -------------------------------                                                                                                             
+echo Stack path is: $slc_stack_path                                                 #print Stack path is: .../merged/SLC
+
+# check if there is a fixed suffix for the slc names
+if ("$slc_suffix" != "") then
+    echo SLC has a suffix as: $slc_suffix                                           #print SLC has a suffix as: .full
+endif
+
+# check if there is a suffix for the geometry files
+if ("$geom_suffix" != "") then
+   echo Geometry files have a suffix as: $geom_suffix                               # Geometry files have a suffix as: .full
+endif
+
+# check if the reference is likely given as YYYYMMDD format
+set n_char = `echo $reference_date | wc -c`      # this includes the new line char too, so date should be 9 not 8 char
+#( $reference_date !~ ^[0-9]+$ )  => expression does not seem to catch letter...
+if ((  "$n_char" != "9" ) || ( "$reference_date" !~ ^[0-9]+$ )) then
+   echo The slc_stack_reference does not look to be in YYYYMMDD format: $reference_date      # The slc_stack_reference should be YYYYMMDD
+   echo
+   exit 1
+endif
+
+# check if the SM dir already exists
+set SMdir = INSAR_$reference_date                                                             # SMdir = INSAR_YYYYMMDD
+if (! -e $SMdir) then   
+    mkdir $SMdir                                                                              # make the INSAR_YYYYMMDD directory
+endif
+
+# will now rename the input file and copy a version into the INSAR_YYYYMMDD folder
+cp input_file $SMdir/.                                                                        # Copy the input_file to INSAR_YYYYMMDD directory
+mv input_file input_file_$reference_date                                                      # Change the name of input_file to input_file_YYYYMMDD
+
+# save the ar, looks, and lambda files for StaMPS
+echo $lambda > $SMdir/lambda.1.in                                                             # Save lambda to a text file named lambda.1.in
+
+set SM_DIR = $WORKDIR/$SMdir                                                                  # SM_DIR = ...../StaMPS/INSAR_YYYYMMDD
+# the reference date
+echo SM: Reference Date = $reference_date                                                     # print Referemce Date = YYYYMMDD
+echo -------------------------------
+echo
+
+# linking the reference SLC                 
+if (! -e $SM_DIR/reference) then                                                              
+   mkdir $SM_DIR/reference                                                                    # make a directory named "reference" inside .../StaMPS/INSAR_YYYYMMDD                                                              
+endif
+cd $SM_DIR/reference                                                                          # Go inside the directory "reference" 
+
+# the SLC structure for the BURST is different
+if ($datasource == "slc_stack")  then                                                         # IF source_data == slc_stack
+    ln -s -f  $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix}* .             # create softlink with the .../merged/SLC/YYYYMMDD/20181220.slc.full* (all files have .full includeing .full, .full.aux.xml, .full.vrt, .full.xml)                         
+    if ( -e $slc_stack_path/$reference_date/${reference_date}.slc.hdr) then                   # IF 20181220.slc.hdr also exist
+        ln -s -f  $slc_stack_path/$reference_date/${reference_date}.slc.hdr .                 # create softlink also with 20181220.slc.hdr
+    else if ( -e $slc_stack_path/$reference_date/${reference_date}.hdr) then                  # IF 20181220.hdf also exist
+        ln -s -f  $slc_stack_path/$reference_date/${reference_date}.hdr .                     # create softlink also with 20181220.hdr
+    endif
+    
+    rm $reference_date.slc${slc_suffix}.vrt                                                         # remove the 20181220.slc.full.vrt
+    gdal_translate -of VRT $reference_date.slc${slc_suffix} $reference_date.slc${slc_suffix}.vrt    # gdaltranslate to VRT format from input file 20181220.slc.full to new 20181220.slc.full.vrt
+    rm $reference_date.slc${slc_suffix}.xml                                                         # remove the 2018.slc.full.xml
+    gdal2isce_xml.py -i $reference_date.slc${slc_suffix}.vrt                                        # gdal2isce.xml.py input file: 20181220.slc.full.vrt
+    ln -s -f $slc_stack_path/$reference_date/$reference_date.slc${slc_suffix} reference.slc         # create softlink between .../merged/SLC/YYYYMMDD/20181220.slc.full and reference.slc
+    set reference_slc = $slc_stack_path/$reference_date/$reference_date.slc$slc_suffix              # set reference_slc = .../merged/SLC/YYYYMMDD/201812220.slc.full
+    set reference_slc_local = reference/$reference_date.slc$slc_suffix                              # set reference_slc_local = reference/20181220.slc.full
+
+    # check if the xml file exist
+    if (! -e $reference_date.slc$slc_suffix.xml) then                                               # IF 20181220.slc.full.xml does not exist, 
+        echo "xml file for the SLC does not exist, you need to have these"
+        exit 1
+    endif
+
+    cd $SM_DIR                                                                                      # cd .../StaMPS/INSAR_YYYYMMDD
+    # getting the meta-data used in stamps
+    get_LengthWidth.py reference/$reference_date.slc$slc_suffix                                     # get_LengthWidth.py from reference/20181220.slc.full
+
+    # linking the reference geometry information                            
+    if (! -e $SM_DIR/reference/geom) then                                                           # IF .../StaMPS/INSAR_YYYYMMDD/geom does not exist                   
+        mkdir $SM_DIR/reference/geom                                                                # make directory "geom" inside /StaMPS/INSAR_YYYYMMDD/reference
+    endif
+    cd $SM_DIR/reference/geom                                                                       # cd to /StaMPS/INSAR_YYYYMMDD/reference/geom
+    ln -s -f  $stack_geom_path/los.rdr${geom_suffix}* .                                             # create softlink to .../merged/geom_master/los.rdr.full*
+    ln -s -f  $stack_geom_path/lat.rdr${geom_suffix}* .                                             # create softlink to .../merged/geom_master/lat.rdr.full*
+    ln -s -f  $stack_geom_path/lon.rdr${geom_suffix}* .                                             # create softlink to .../merged/geom_master/lon.rdr.full*
+    ln -s -f  $stack_geom_path/hgt.rdr${geom_suffix}* .                                             # create softlink to .../merged/geom_master/hgt.rdr.full*
+    # check if the xml files exist
+    if (! -e los.rdr${geom_suffix}.xml) then
+        echo "xml file for the SLC does not exist, you need to have these"                          # check if .../merged/geom_master/los.rdr.full.xml exist
+        exit 1
+    endif
+    if (! -e lon.rdr${geom_suffix}.xml) then                                                        # check if .../merged/geom_master/lon.rdr.full.xml exist
+        echo "xml file for the SLC does not exist, you need to have these"
+        exit 1
+    endif
+    if (! -e lat.rdr${geom_suffix}.xml) then
+        echo "xml file for the SLC does not exist, you need to have these"                          # check if .../merged/geom_master/lat.rdr.full.xml exist
+        exit 1
+    endif
+    if (! -e hgt.rdr${geom_suffix}.xml) then
+        echo "xml file for the SLC does not exist, you need to have these"                          # check if .../merged/geom_master/hgt.rdr.full.xml exist
+        exit 1
+    endif
+    cd $SM_DIR                                                                                      # cd to /StaMPS/INSAR_YYYYMMDD/
+
+    # extract the information in readable format for stamps
+    isce2stamps                                                                                     # RUN isce2stamps
+
+else if ($datasource == "slc_stack_burst") then
+    echo \# BURST IMPLEMENTATION HERE \#
+    exit 1
+endif
+
+# generating a file with the baseline information
+cd $SM_DIR                                                                                                  # cd to /StaMPS/INSAR_YYYYMMDD/
+step_baseline_stack.py -i $slc_stack_baseline_path -m $reference_date                                       # RUN step_baselie_stack.py 
+# Setting the new SM processing directory
+cd $slc_stack_path                                                                                          # cd to .../merged/SLC
+if (-e $SM_DIR/slcs.list) then                                                                              # IF .../merged/SLC/slcs.list exist
+   rm $SM_DIR/slcs.list > /dev/null                                                                         # WHAT DOES THIS ACTION DO?
+endif
+if (! -e $SM_DIR/slcs.list) then                                                                            # IF .../merged/SLC/slcs.list does not exist
+   \ls -d [0-9]*[0-9] | sed "/$reference_date/ d" | gawk 'BEGIN {FS="/"} {print $(NF)}' > $SM_DIR/slcs.list # make the slcs.list
+   echo "Processing all SLCs as secondarys except $reference_date"                                          # print "Processing all SLCs as secondarys except 20181220"
+endif
+cd $SM_DIR                                                                                                  # cd to /StaMPS/INSAR_YYYYMMD
+
+# loop over the set of dates to make SM combinations
+echo Looping over the secondary acquisitions now: 
+foreach dir(`cat slcs.list`)                                                                                # loop over the slcs.list
+   set secondary_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $NF}'`                                     # set secondary_date = YYYYMMDD
+   if ($secondary_date == "") then
+       set secondary_date = `echo $dir | gawk 'BEGIN {FS="/"} {print $(NF-1)}'`
+   endif             
+   echo $secondary_date                                                                                     # print "YYYYMMDD"
+
+   # check if the SLC directoy needs to be made
+   if (! -e $secondary_date) then                                                                           # if the folder named "YYYYMMDD" does not exist
+       mkdir $secondary_date                                                                                # make the directroy names "YYYYMMDD" (let it be 20170523)
+   endif
+    
+   # the secondary SLC
+   set secondary_slc = ${slc_stack_path}/$secondary_date/$secondary_date.slc$slc_suffix                     # set secondary_slc = .../merged/SLC/YYYYMMDD/20170523.slc.full
+   set secondary_slc_local = $secondary_date/coreg_fine/$secondary_date.slc$slc_suffix                      # set secondary_slc_local = 20170523/coreg_fine/20170523.slc.full
+   cd $secondary_date                                                                                       # cd to 20170523
+
+   # generate the coreg_fine symbolic link which is used when loading into stamps
+   if (! -e coreg_fine) then
+       mkdir coreg_fine/                                                                                    # make a directory named "coreg_fine" inside the 20170523 folder
+   endif 
+   cd coreg_fine                                                                                            # go into the directory "coreg_fine"
+   ln -s -f ${secondary_slc}* .                                                                             # create soft link to .../merged/SLC/20170523/20170523.slc*
+   if ( -e ${slc_stack_path}/$secondary_date/$secondary_date.slc.hdr ) then                                 # if the file named 20170523.slc.hdr exist which existed in Sentinel workflow)
+       ln -s -f ${slc_stack_path}/$secondary_date/$secondary_date.slc.hdr .                                 # create soft link to .../merged/SLC/20170523/20170523.slc.hdr
+   else if ( -e ${slc_stack_path}/$secondary_date/$secondary_date.hdr) then                                 # if the file named 20170523.hdf exist (Does not exist in Sentinel workflow)
+        ln -s -f ${slc_stack_path}/$secondary_date/$secondary_date.hdr .                                    # create soft link to .../merged/SLC/20170523/20170523.hdf
+   endif
+   rm $secondary_date.slc${slc_suffix}.vrt                                                                  # remove the file 20170523.slc.full.vrt
+   gdal_translate -of VRT $secondary_date.slc$slc_suffix $secondary_date.slc${slc_suffix}.vrt               # gdal_translate to VRT format from 20170523.slc.full to new 20170523.slc.full.vrt
+   rm $secondary_date.slc${slc_suffix}.xml                                                                  # remove the file 20170523.slc.full.xml
+   gdal2isce_xml.py -i $secondary_date.slc${slc_suffix}.vrt                                                 # gdal2isce_xml-py from 20170523.slc.full.vrt (output file : 20170523.slc.full.xml)
+   ln -s -f $secondary_slc coreg.slc                                                                        # create soft link from   .../merged/SLC/YYYYMMDD/20170523.slc.full to coreg.slc                                                                                       
+
+   # check if the xml file exist, if not need to make it
+   if (! -e $secondary_date.slc$slc_suffix.xml) then                                                        # IF 20170523.slc.full.xml does not exist
+        echo "xml file for the SLC does not exist, you need to have these"                                  #
+        echo try: gdal2isce_xml.py -i $secondary_date.slc$slc_suffix                                        #
+        exit 1
+   endif
+        
+   cd $SM_DIR                                                                                               # cd to .../StaMPS/INSAR_YYYMMDD
+   # generate the intererograms if requested
+   set IFG_DIR = $secondary_date                                                                            # IFG_DIR = 20170523
+   if ( "$generate_ifgs" == "y" ) then                                                                      # Check the flag generate_ifgs, should be "y"
+        set save_ifg = $IFG_DIR/isce_minrefdem.int                                                          # set save_ifg = 20170523/isce_minrefdem.int
+        # store the information on how isce will be called
+        if ( -f $save_ifg & $overwrite == 0 ) then                                                          # IF the file 20170523/isce_minrefdem.int exist and overwrite = 0
+            # nothing to be done, file exist and user does not want to overwrite it                         # exit the if and not to overwrite the existing file
+            echo $save_ifg exist, will not overwrite on user request
+        else
+            echo "imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP" >> processing_SM.log   
+            echo "imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP"                        
+            imageMath.py -e='a*conj(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ifg -t CFLOAT -s BIP                                   # use imageMath --a reference/20181220.slc.full --b 20170523/coreg_fine/20170523.slc.full -o 20170523/isce_minrefdem.int
+            fixImageXml.py -f -i $save_ifg                                                                                                                # fixImageXml.py -f -i 20170523/isce_minrefdem.int
+        endif
+   endif
+
+   # making the amplitude file
+   if ( "$amplitude_flag" == "y") then                                                                                                                    # check amplitude_flag, shoud be == "n" 
+       set save_ampl = $IFG_DIR/isce_minrefdem.amp                                                                                                        # INSAR_YYYYMMDD/20170523/minrefdem.amp
+       # making the amplitude for the ifgs, for ISCE the amp is a BIP file typically
+       if ( -f $save_ampl & $overwrite == 0 ) then
+            echo $save_ampl exist, will not overwrite on user request
+       else
+           echo "imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP" >> processing_SM.log
+           echo "imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP"
+           imageMath.py -e='abs(a);abs(b)' --a=$reference_slc_local --b=$secondary_slc_local -o $save_ampl -t FLOAT -s BIP                                
+           fixImageXml.py -f -i $save_ampl
+       endif
+   endif
+
+
+   # include a symbolic link for the secondary and reference slc.
+   # This will be used latter on to get the amplitude information from in StaMPS
+   cd $IFG_DIR                                                                                                           # cd 20170523
+   ln -s -f $secondary_slc secondary.slc                                                                                 # create soft link from secpndary_slc (=.../merged/SLC/YYYYMMDD/20170523.slc.full) to secondary.slc
+   ln -s -f $reference_slc reference.slc                                                                                 # create soft link from reference_slc (= .../merged/SLC/YYYYMMDD/201812220.slc.full) to reference.slc
+
+   cd $SM_DIR                                                                                                            # cd to .../StaMPS/INSAR_YYYMMDD
+
+   echo 
+   echo 
+end
+cd $WORKDIR                                                                                                              # cd .../StaMPS (Go back to the highest level)
+
