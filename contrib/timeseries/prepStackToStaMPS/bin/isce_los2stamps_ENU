@@ -10,12 +10,12 @@
 # Organization: Jet Propulsion Laboratory, California Institute of Technology
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-set curdir = `pwd` 
+set curdir = `pwd`                                                                                                          # cur_dir = /StaMPS/INSAR_YYYYMMDD/
 echo $curdir
 
 # extract the geom suffix in case it is specified
-set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`
-set overwrite_flag = `grep overwrite input_file | awk '{print $2}'`
+set geom_suffix = `grep geom_suffix  input_file | awk '{print $2}'`                                                         # geom_suffix = .full
+set overwrite_flag = `grep overwrite input_file | awk '{print $2}'`                                                         # overwrite_flag = y
 
 # adding the overwrite_flag, set by default to overwrite files
 if ( "$overwrite_flag" == "" ) then
@@ -31,32 +31,32 @@ endif
 
 
 # setting the filenames 
-set los_file = $curdir/reference/geom/los.rdr$geom_suffix
+set los_file = $curdir/reference/geom/los.rdr$geom_suffix                                                                   # los_file = /StaMPS/INSAR_YYYYMMDD/geom/los.rdr.full
 
 # extracting the enu conversion files
-if ( -f $curdir/e.raw & "$overwrite_flag" == "n" ) then
+if ( -f $curdir/e.raw & "$overwrite_flag" == "n" ) then                                                                     # IF /StaMPS/INSAR_YYYYMMDD/e.raw exist
     echo east2los file exist and will not be overwritten
-else
+else                                                                                                                        # IF not exist,
     echo extracting east2los file from isce
-    imageMath.py --eval='sin(rad(a_0))*cos(rad(a_1+90))' --a=$los_file -t FLOAT -s BIL -o $curdir/e.raw
+    imageMath.py --eval='sin(rad(a_0))*cos(rad(a_1+90))' --a=$los_file -t FLOAT -s BIL -o $curdir/e.raw                     # imageMath.py --a=/StaMPS/INSAR_YYYYMMDD/geom/los.rdr.full -o=/StaMPS/INSAR_YYYYMMDD/e.raw 
     echo
 endif
 echo
 
-if ( -f $curdir/n.raw & "$overwrite_flag" == "n" ) then
+if ( -f $curdir/n.raw & "$overwrite_flag" == "n" ) then                                                                     # IF /StaMPS/INSAR_YYYYMMDD/e.raw exist
     echo north2los file exist and will not be overwritten
-else
+else                                                                                                                        # IF not exist,
     echo extracting north2los file from isce
-    imageMath.py --eval='sin(rad(a_0)) * sin(rad(a_1+90))' --a=$los_file -t FLOAT -s BIL -o $curdir/n.raw
+    imageMath.py --eval='sin(rad(a_0)) * sin(rad(a_1+90))' --a=$los_file -t FLOAT -s BIL -o $curdir/n.raw                   # imageMath.py --a=/StaMPS/INSAR_YYYYMMDD/geom/los.rdr.full -o=/StaMPS/INSAR_YYYYMMDD/n.raw 
     echo
 endif
 echo
 
-if ( -f $curdir/u.raw & "$overwrite_flag" == "n" ) then
+if ( -f $curdir/u.raw & "$overwrite_flag" == "n" ) then                                                                      # IF /StaMPS/INSAR_YYYYMMDD/e.raw exist      
     echo up2los file exist and will not be overwritten
-else
+else                                                                                                                         # IF not exist,
     echo extracting up2los file from isce
-    imageMath.py --eval='cos(rad(a_0))' --a=$los_file  -t FLOAT -s BIL -o $curdir/u.raw
+    imageMath.py --eval='cos(rad(a_0))' --a=$los_file  -t FLOAT -s BIL -o $curdir/u.raw                                      # imageMath.py --a=/StaMPS/INSAR_YYYYMMDD/geom/los.rdr.full -o=/StaMPS/INSAR_YYYYMMDD/u.raw 
     echo
 endif
 echo
