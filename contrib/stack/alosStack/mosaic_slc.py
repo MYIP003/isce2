@@ -55,11 +55,11 @@ if __name__ == '__main__':
 
 
     #get user parameters from input
-    dateReferenceStack = inps.ref_date_stack # 180829.track.xml
+    dateReferenceStack = inps.ref_date_stack # 180829(.track.xml)
     dateReference = inps.ref_date # 180829
     dateSecondary = inps.sec_date 
-    numberRangeLooks1 = 1
-    numberAzimuthLooks1 = 1
+    numberRangeLooks1 = inps.nrlks1
+    numberAzimuthLooks1 = inps.nalks1
     #######################################################
 
     logFile = 'process_merge_slc.log'
