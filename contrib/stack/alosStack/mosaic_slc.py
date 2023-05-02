@@ -63,11 +63,8 @@ if __name__ == '__main__':
     #######################################################
 
     logFile = 'process_merge_slc.log'
-
-
     interferogram = 'merged.slc'
     
-
     spotlightModes, stripmapModes, scansarNominalModes, scansarWideModes, scansarModes = acquisitionModesAlos2()
 
     #use one date to find frames and swaths. any date should work, here we use dateIndexReference
@@ -102,9 +99,9 @@ if __name__ == '__main__':
             inputInterferograms = []
 
                 #inputInterferograms is a list of strings
-                inputInterferograms = ["Eve", "Alice", "Bob","",""]
+                inputInterferograms = ["/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s1/170510.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s2/170510.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s3/170510.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s4/170510.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s5/170510.slc"]
                 #interferogram is the output merged SLC
-                interferogram = "merged.slc"
+                #interferogram = "merged.slc"
 
             #note that frame parameters do not need to be updated after mosaicking
 
