@@ -81,7 +81,7 @@ if __name__ == '__main__':
     
     #dateReferenceStack='180829'
 
-    trackReferenceStack = loadTrack('/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/pairs/170510-170719/', dateReferenceStack)
+    trackReferenceStack = loadTrack(os.path.join('../../',dateReference), dateReferenceStack)
 
     ##mosaic swaths
     for i, frameNumber in enumerate(frames):
