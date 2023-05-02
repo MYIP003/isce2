@@ -3,7 +3,7 @@
 #
 # Author: Cunren Liang
 # Copyright 2015-present, NASA-JPL/Caltech
-#
+# This script has to be run in the directory dates_resampled/YYMMDD/f1_0000/
 
 import os
 import glob
@@ -72,17 +72,11 @@ if __name__ == '__main__':
 
     nframe = len(frames)
     nswath = len(swaths)
-    #use one date to find frames and swaths. any date should work, here we use dateIndexReference
-    #frames = [2200]
-    #swaths = [1,2,3,4,5]
-
-    #nframe = len(frames)
-    #nswath = len(swaths)
     
-    #dateReferenceStack='180829'
-
+    
     trackReferenceStack = loadTrack(os.path.join('../../',dateReference), dateReferenceStack)
 
+    fullpath = os.getcwd()
     ##mosaic swaths
     for i, frameNumber in enumerate(frames):
     
@@ -101,19 +95,17 @@ if __name__ == '__main__':
 
          #list of input files
     inputInterferograms = []
+
     for j, swathNumber in enumerate(range(swaths[0], swaths[-1] + 1)):
-               swathDir = 's{}'.format(swathNumber)
-               inputInterferograms.append(os.path.join('./', swathDir, interferogram))
-               
+              swathDir = 's{}'.format(swathNumber)
+              inputInterferograms.append(os.path.join(fullpath, swathDir, interferogram))
+    #print(fullpath)
+    #print(inputInterferograms)
     
-    #inputInterferograms is a list of strings
-    ##inputInterferograms = ["/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s1/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s2/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s3/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s4/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s5/170719.slc"]
-                #interferogram is the output merged SLC
-                #interferogram = "merged.slc"
+   
+    #note that frame parameters do not need to be updated after mosaicking
 
-            #note that frame parameters do not need to be updated after mosaicking
-
-            #mosaic SLCs
+    #mosaic SLCs
     swathMosaic(trackReferenceStack.frames[i], inputInterferograms, interferogram, 
                 rangeOffsets, azimuthOffsets, numberRangeLooks1, numberAzimuthLooks1, resamplingMethod=1)
 
