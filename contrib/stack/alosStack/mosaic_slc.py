@@ -68,13 +68,13 @@ if __name__ == '__main__':
     spotlightModes, stripmapModes, scansarNominalModes, scansarWideModes, scansarModes = acquisitionModesAlos2()
 
     #use one date to find frames and swaths. any date should work, here we use dateIndexReference
-    frames = 2200
+    frames = [2200]
     swaths = [1,2,3,4,5]
 
     nframe = len(frames)
     nswath = len(swaths)
     
-    dateReferenceStack=180829
+    dateReferenceStack='180829'
 
     trackReferenceStack = loadTrack('/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/pairs/170510-170719/', dateReferenceStack)
 
@@ -88,30 +88,24 @@ if __name__ == '__main__':
        
          #compute swath offset using reference stack
          #geometrical offset is enough now
-         offsetReferenceStack = swathOffset(trackReferenceStack.frames[i], dateReferenceStack+'.slc', 'swath_offset_' + dateReferenceStack + '.txt', 
-                               crossCorrelation=False, numberOfAzimuthLooks=10)
+    offsetReferenceStack = swathOffset(trackReferenceStack.frames[i], '180829.slc', 'swath_offset_' + dateReferenceStack + '.txt', crossCorrelation=False, numberOfAzimuthLooks=10)
          #we can faithfully make it integer.
          #this can also reduce the error due to floating point computation
-            rangeOffsets = [float(round(x)) for x in offsetReferenceStack[0]]
-            azimuthOffsets = [float(round(x)) for x in offsetReferenceStack[1]]
+    rangeOffsets = [float(round(x)) for x in offsetReferenceStack[0]]
+    azimuthOffsets = [float(round(x)) for x in offsetReferenceStack[1]]
 
          #list of input files
-            inputInterferograms = []
+    inputInterferograms = []
 
                 #inputInterferograms is a list of strings
-                inputInterferograms = ["/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s1/170510.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s2/170510.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s3/170510.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s4/170510.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170510/f1_2200/s5/170510.slc"]
+    inputInterferograms = ["/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s1/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s2/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s3/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s4/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s5/170719.slc"]
                 #interferogram is the output merged SLC
                 #interferogram = "merged.slc"
 
             #note that frame parameters do not need to be updated after mosaicking
 
             #mosaic SLCs
-            swathMosaic(trackReferenceStack.frames[i], inputInterferograms, interferogram, 
+    swathMosaic(trackReferenceStack.frames[i], inputInterferograms, interferogram, 
                 rangeOffsets, azimuthOffsets, numberRangeLooks1, numberAzimuthLooks1, resamplingMethod=1)
 
-            create_xml(interferogram, trackReferenceStack.frames[i].numberOfSamples, trackReferenceStack.frames[i].numberOfLines, 'int')
-
-     
-
-        
-   
+    create_xml(interferogram, trackReferenceStack.frames[i].numberOfSamples, trackReferenceStack.frames[i].numberOfLines, 'int')
