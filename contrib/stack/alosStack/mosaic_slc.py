@@ -63,18 +63,23 @@ if __name__ == '__main__':
     #######################################################
 
     logFile = 'process_merge_slc.log'
-    interferogram = 'merged.slc'
+    interferogram = dateSecondary + '.slc'
     
     spotlightModes, stripmapModes, scansarNominalModes, scansarWideModes, scansarModes = acquisitionModesAlos2()
-
-    #use one date to find frames and swaths. any date should work, here we use dateIndexReference
-    frames = [2200]
-    swaths = [1,2,3,4,5]
+    
+    frames = sorted([x[-4:] for x in glob.glob(os.path.join('../', 'f*_*'))])
+    swaths = sorted([int(x[-1]) for x in glob.glob(os.path.join('../', 'f1_*', 's*'))])
 
     nframe = len(frames)
     nswath = len(swaths)
+    #use one date to find frames and swaths. any date should work, here we use dateIndexReference
+    #frames = [2200]
+    #swaths = [1,2,3,4,5]
+
+    #nframe = len(frames)
+    #nswath = len(swaths)
     
-    dateReferenceStack='180829'
+    #dateReferenceStack='180829'
 
     trackReferenceStack = loadTrack('/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/pairs/170510-170719/', dateReferenceStack)
 
@@ -88,7 +93,7 @@ if __name__ == '__main__':
        
          #compute swath offset using reference stack
          #geometrical offset is enough now
-    offsetReferenceStack = swathOffset(trackReferenceStack.frames[i], '180829.slc', 'swath_offset_' + dateReferenceStack + '.txt', crossCorrelation=False, numberOfAzimuthLooks=10)
+    offsetReferenceStack = swathOffset(trackReferenceStack.frames[i],dateReferenceStack+'.slc', 'swath_offset_' + dateReferenceStack + '.txt', crossCorrelation=False, numberOfAzimuthLooks=10)
          #we can faithfully make it integer.
          #this can also reduce the error due to floating point computation
     rangeOffsets = [float(round(x)) for x in offsetReferenceStack[0]]
@@ -96,8 +101,12 @@ if __name__ == '__main__':
 
          #list of input files
     inputInterferograms = []
-
-                #inputInterferograms is a list of strings
+    for j, swathNumber in enumerate(range(swaths[0], swaths[-1] + 1)):
+               swathDir = 's{}'.format(swathNumber)
+               inputInterferograms.append(os.path.join('../', swathDir, interferogram))
+               
+    
+    #inputInterferograms is a list of strings
     inputInterferograms = ["/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s1/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s2/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s3/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s4/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s5/170719.slc"]
                 #interferogram is the output merged SLC
                 #interferogram = "merged.slc"
