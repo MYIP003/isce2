@@ -107,7 +107,7 @@ if __name__ == '__main__':
                
     
     #inputInterferograms is a list of strings
-    #inputInterferograms = ["/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s1/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s2/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s3/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s4/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s5/170719.slc"]
+    ##inputInterferograms = ["/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s1/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s2/170719.slc", "/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s3/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s4/170719.slc","/mnt/data/processing/Yamal_C11/Path_064_ScanSAR_DSC_ArcticDEM_full/dates_resampled/170719/f1_2200/s5/170719.slc"]
                 #interferogram is the output merged SLC
                 #interferogram = "merged.slc"
 
