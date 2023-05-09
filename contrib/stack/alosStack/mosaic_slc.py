@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
-#
-# Author: Cunren Liang
+# Modified by Michlle Yip based on mosaic_interferogram.py
+# Modified on 09/05/2023
+# Author of mosaic_interferogram.py : Cunren Liang 
 # Copyright 2015-present, NASA-JPL/Caltech
 # This script has to be run in the directory dates_resampled/YYMMDD/f1_0000/
 
